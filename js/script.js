@@ -1,75 +1,97 @@
-/**
- * Se detta som en grund att utgå ifrån.
- * Det är helt fritt att ändra och ta bort kod om ni
- * önskar lösa problemen med andra metoder.
- */
-
-let lcd = null; // displayen
-
-let memory = 0; // Lagrat/gamlat värdet från display
-let arithmetic = null; // Vilken beräkning som skall göras +,-, x eller /
+let lcd = null;  
+let memory = 0;  
+let arithmetic = null;  
+let newEntry = false;  
 
 function init() {
     lcd = document.getElementById('lcd');
-    let keyBoard = document.getElementById('keyBoard')
-    keyBoard.onclick = buttonClick;
+    let keyBoard = document.getElementById('keyBoard');
+    keyBoard.addEventListener('click', buttonClick);
 }
 
-/**
- * Händelsehanterare för kalkylatorns tangentbord
- */
 function buttonClick(e) {
-    let btn = e.target.id; //id för den tangent som tryckte ner
-
-
-    // kollar om siffertangent är nedtryckt
-    if (btn.substring(0, 1) === 'b') {
-        let digit = btn.substring(1, 2); // plockar ut siffran från id:et
-
-    } else { // Inte en siffertangent, övriga tangenter.
-
+    let btn = e.target.id;
+    if (btn[0] === 'b') {  
+        addDigit(btn.substring(1));
+    } else if (btn === 'comma') {
+        addComma();
+    } else if (['add', 'sub', 'mul', 'div'].includes(btn)) {
+        setOperator(btn);
+    } else if (btn === 'enter') {
+        calculate();
+    } else if (btn === 'clear') {
+        memClear();
     }
 }
 
-/**
- *  Lägger till siffra på display.
- */
 function addDigit(digit) {
+    if (newEntry) {
+        lcd.value = '';
+        newEntry = false;
+    }
+    lcd.value = (lcd.value === '0') ? digit : lcd.value + digit;
 }
 
-/**
- * Lägger till decimaltecken
- */
 function addComma() {
-
+    if (!lcd.value.includes('.')) {
+        lcd.value += '.';
+    }
 }
 
-/**
- * Sparar operator.
- * +, -, *, /
- */
-function setOperator(operator){
-
+function setOperator(operator) {
+    if (memory !== 0 && arithmetic !== null) {
+        calculate();
+    } else {
+        memory = parseFloat(lcd.value);  
+    }
+    arithmetic = operator;
+    newEntry = true;  
 }
 
-/**
- * Beräknar ovh visar resultatet på displayen.
- */
-function calculate() {
+function calculate(isEqualsPressed) {
+    console.log("Calculating...");  
+    if (!newEntry && arithmetic !== null) {
+        let current = parseFloat(lcd.value);
+        switch (arithmetic) {
+            case 'add':
+                memory += current;
+                break;
+            case 'sub':
+                memory -= current;
+                break;
+            case 'mul':
+                memory *= current;
+                break;
+            case 'div':
+                memory = (current !== 0) ? memory / current : 'Error';
+                break;
+        }
 
+        
+        if (memory === 1337) {
+            lcd.value = "LEET";
+        } else {
+            lcd.value = memory.toString();
+        }
+
+        if (isEqualsPressed) {
+            arithmetic = null;  
+            memory = 0;  
+        }
+        newEntry = true;
+    }
 }
 
-/** Rensar display */
+
 function clearLCD() {
-    lcd.value = '';
-    isComma = false;
+    lcd.value = '0';
 }
 
-/** Rensar allt, reset */
-function memClear(){
+function memClear() {
     memory = 0;
     arithmetic = null;
     clearLCD();
+    newEntry = false;
 }
 
 window.onload = init;
